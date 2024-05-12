@@ -1,0 +1,4 @@
+NUMERICAL RESULTS
+Total mass is 6.44817e+23 kg
+Total mean density is 3953.13 kg/m^3
+Normalized MoI is 0.3638

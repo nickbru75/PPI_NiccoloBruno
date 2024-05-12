@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 def conductive_layer(T0, grad, z):
@@ -27,21 +28,26 @@ def density(rho_0, alpha_T, k, T, p):
         rho[i] = rho_0 * (1 - alpha_T * (T[i] - T[0]) + 1/k * (p[i] - p[0]))
     return rho
 
+path = './output/model2'
+if not os.path.exists(path):
+    os.makedirs(path)
 
 step = 100
 G = 6.6743e-11      # Gravitational constant m^3/kg/s^2
-grad = 0.0003
+grad = 0.002
 T0_in = 288.15
-T_avg = 288
+T_avg = 1600
 alpha = 3e-5
 alpha_T = alpha
 cp = 1200
 K = 130e9
 
-R = np.array([0, 1.675e6, 3.2895e6, 3.3895e6])
+h = (T_avg - T0_in)/grad
+
+R = np.array([0, 1.675e6, 3.2895e6-h, 3.2895e6, 3.3895e6])
 radius = np.arange(0, R[-1]+step, step)
-rho_layer = np.array([7200, 3500, 2900])
-convective = np.array([0, 1, 0])
+rho_layer = np.array([7200, 3500, 3200, 2900])
+convective = np.array([1, 1, 0, 0])
 
 index_old = 0
 rho = np.ones(shape=radius.shape)
@@ -98,12 +104,14 @@ while np.average(np.abs(rho - rho_old)) > tol:
         if convective[-i] == 0:
             T = conductive_layer(T0, grad, z)
             T_avg = T[-1]
+            T0 = T[-1]
             temp = np.append(temp, T)
             T = T[::-1]
             rho = np.append(rho, density(rho0, alpha_T, K, T, pr))
         else:
             T = convective_layer(T_avg, z, alpha, grav, cp)
             T0 = T[-1]
+            T_avg = T[-1]
             temp = np.append(temp, T)
             T = T[::-1]
             rho = np.append(rho, density(rho0, alpha_T, K, T, pr))
@@ -116,15 +124,28 @@ print('Mass :', mass[-1], 'kg')
 I = 8*np.pi/3*np.sum(rho*radius**4*step)
 print('Moment of inertia normalized :', I/(mass[-1]*radius[-1]**2))
 
-plt.figure()
-plt.plot(rho, radius)
-plt.plot(temp, radius)
+
+path_plot = f'{path}/plot'
+if not os.path.exists(path_plot):
+    os.makedirs(path_plot)
+
+plt.figure(figsize=(10, 8))
+plt.rc('font', size=18)
+plt.plot(rho, radius/1000, linewidth=2, label='Density')
+plt.plot(temp, radius/1000, linewidth=2, label='Temperature')
+plt.xlabel('Density ($kg/m^3$), Temperature [k]')
+plt.ylabel('Radius (Km)')
+plt.title('Density and temperature profiles')
+plt.legend()
+plt.tight_layout()
+plt.savefig(f'{path_plot}/profile.png')
 plt.show()
 
 
 lw = 2
 plt.figure(figsize=(14, 8))
 plt.rc('font', size=18)
+plt.suptitle('1D layered model')
 plt.subplot(1, 3, 1)
 plt.plot(mass / 1e23, radius / 1e3, lw=lw)
 plt.xlabel('Integrated mass ($10^{23}$ Kg)')
@@ -144,4 +165,5 @@ plt.ylabel('Radius (km)')
 plt.gca().set_xlim(left=0)
 plt.gca().set_ylim(bottom=0)
 plt.tight_layout()
+plt.savefig(f'{path_plot}/layer_model.png')
 plt.show()
