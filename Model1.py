@@ -89,7 +89,7 @@ G = 6.6743e-11  # Gravitational constant m^3/kg/s^2
 p0 = 0  # Atmospheric pressure
 step = 100
 verify_code = 0  # 1 if testing the code, 0 otherwise
-user_input = 0  # 1 if acquiring user's input, 0 otherwise
+user_input = 1  # 1 if acquiring user's input, 0 otherwise
 
 if verify_code:
     # Earth constant density
